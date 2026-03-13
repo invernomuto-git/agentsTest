@@ -34,7 +34,7 @@ class Aziende extends BaseController
      */
     public function create(): string|\CodeIgniter\HTTP\RedirectResponse
     {
-        if ($this->request->getMethod() === 'post') {
+        if ($this->request->getMethod() === 'POST') {
             $rules    = ['nome' => 'required|max_length[255]'];
             $messages = ['nome' => ['required' => 'Il campo Nome è obbligatorio.']];
 
@@ -77,7 +77,7 @@ class Aziende extends BaseController
             return redirect()->to('/aziende');
         }
 
-        if ($this->request->getMethod() === 'post') {
+        if ($this->request->getMethod() === 'POST') {
             $rules    = ['nome' => 'required|max_length[255]'];
             $messages = ['nome' => ['required' => 'Il campo Nome è obbligatorio.']];
 
@@ -122,7 +122,7 @@ class Aziende extends BaseController
             return redirect()->to('/aziende');
         }
 
-        if ($this->request->getMethod() === 'post') {
+        if ($this->request->getMethod() === 'POST') {
             $this->aziendaModel->delete($id);
             return redirect()->to('/aziende')->with('success', 'Azienda eliminata con successo.');
         }
