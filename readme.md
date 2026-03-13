@@ -2,6 +2,7 @@
 ## Scopo
 L'obiettivo è quello di testare le possibilità di sviluppo usando gli agenti copilot su github e nello spcifico:
 1. se sono in grado di sviluppare codice che deve interagire con una base di dati
+   1. È in grado e gestisce molto bene la creazione di migrations
 2. se sono in grado di sviluppare codice basandosi sull'uso di un framework es. Codeigniter
 3. se sono in grado di sviluppare codice su un framework e su altre classi installate, tipo Grocery
 4. se sono in grado di sviluppare codice su Wordpress
