@@ -32,6 +32,23 @@ try {
     $aziende = [];
 }
 
+// Carica l'elenco dei tag disponibili
+try {
+    $tags_disponibili = get_db()->query('SELECT id, nome FROM tags ORDER BY id')->fetchAll();
+} catch (PDOException $e) {
+    $tags_disponibili = [];
+}
+
+// Carica i tag attualmente associati al contatto
+try {
+    $stmt_ct = get_db()->prepare('SELECT id_tag FROM contatti_tags WHERE id_contatto = :id');
+    $stmt_ct->execute([':id' => $id]);
+    $tag_ids_correnti = array_column($stmt_ct->fetchAll(), 'id_tag');
+    $tag_ids_correnti = array_map('intval', $tag_ids_correnti);
+} catch (PDOException $e) {
+    $tag_ids_correnti = [];
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nome            = trim($_POST['nome']            ?? '');
     $cognome         = trim($_POST['cognome']         ?? '');
@@ -41,6 +58,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id_azienda      = isset($_POST['id_azienda']) && ctype_digit($_POST['id_azienda'])
                         ? (int) $_POST['id_azienda']
                         : null;
+
+    // Recupera i tag selezionati e valida che siano ID numerici validi
+    $tag_ids_validi = array_values(array_filter(
+        array_map('intval', $_POST['tags'] ?? []),
+        fn($v) => $v > 0
+    ));
 
     // Validazione
     if ($nome === '') {
@@ -55,7 +78,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($errors)) {
         try {
-            $stmt = get_db()->prepare(
+            $db = get_db();
+            $db->beginTransaction();
+
+            $stmt = $db->prepare(
                 'UPDATE contatti
                     SET nome = :nome,
                         cognome = :cognome,
@@ -74,6 +100,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':id_azienda'      => $id_azienda,
                 ':id'              => $id,
             ]);
+
+            // Aggiorna le associazioni ai tag: elimina tutte e re-inserisce quelle selezionate
+            $db->prepare('DELETE FROM contatti_tags WHERE id_contatto = :id')->execute([':id' => $id]);
+            if (!empty($tag_ids_validi)) {
+                $stmt_tag = $db->prepare(
+                    'INSERT IGNORE INTO contatti_tags (id_contatto, id_tag) VALUES (:id_contatto, :id_tag)'
+                );
+                foreach ($tag_ids_validi as $id_tag) {
+                    $stmt_tag->execute([':id_contatto' => $id, ':id_tag' => $id_tag]);
+                }
+            }
+
+            $db->commit();
+
             // Aggiorna i dati locali per il form
             $contatto = array_merge($contatto, [
                 'nome'            => $nome,
@@ -83,8 +123,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'data_nascita'    => $data_nascita,
                 'id_azienda'      => $id_azienda,
             ]);
+            $tag_ids_correnti = $tag_ids_validi;
             $success = true;
         } catch (PDOException $e) {
+            isset($db) && $db->inTransaction() && $db->rollBack();
             $errors[] = 'Errore durante l\'aggiornamento del contatto.';
         }
     }
@@ -98,6 +140,14 @@ $v = $_SERVER['REQUEST_METHOD'] === 'POST'
        'id_azienda' => isset($_POST['id_azienda']) && ctype_digit($_POST['id_azienda'])
                         ? (int)$_POST['id_azienda'] : null]
     : $contatto;
+
+// Tag selezionati per il form (POST ha priorità in caso di errori)
+$tag_ids_form = ($_SERVER['REQUEST_METHOD'] === 'POST' && !$success)
+    ? array_values(array_filter(
+        array_map('intval', $_POST['tags'] ?? []),
+        fn($v) => $v > 0
+      ))
+    : $tag_ids_correnti;
 ?>
 <!DOCTYPE html>
 <html lang="it">
@@ -159,6 +209,21 @@ $v = $_SERVER['REQUEST_METHOD'] === 'POST'
                 <?php endforeach; ?>
             </select>
         </div>
+        <?php if (!empty($tags_disponibili)): ?>
+        <div class="form-group">
+            <label>Tag</label>
+            <div class="tag-checkboxes">
+                <?php foreach ($tags_disponibili as $tag): ?>
+                    <label class="tag-checkbox-label">
+                        <input type="checkbox" name="tags[]"
+                               value="<?= $tag['id'] ?>"
+                               <?= in_array((int)$tag['id'], $tag_ids_form, true) ? 'checked' : '' ?>>
+                        <?= htmlspecialchars($tag['nome']) ?>
+                    </label>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <?php endif; ?>
         <button type="submit" class="btn-primary">Aggiorna contatto</button>
         <a href="index.php" class="btn-cancel">Annulla</a>
     </form>

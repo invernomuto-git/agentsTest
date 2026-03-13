@@ -11,6 +11,13 @@ try {
     $aziende = [];
 }
 
+// Carica l'elenco dei tag disponibili
+try {
+    $tags_disponibili = get_db()->query('SELECT id, nome FROM tags ORDER BY id')->fetchAll();
+} catch (PDOException $e) {
+    $tags_disponibili = [];
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nome            = trim($_POST['nome']            ?? '');
     $cognome         = trim($_POST['cognome']         ?? '');
@@ -20,6 +27,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id_azienda      = isset($_POST['id_azienda']) && ctype_digit($_POST['id_azienda'])
                         ? (int) $_POST['id_azienda']
                         : null;
+
+    // Recupera i tag selezionati e valida che siano ID numerici validi
+    $tag_ids_validi = array_values(array_filter(
+        array_map('intval', $_POST['tags'] ?? []),
+        fn($v) => $v > 0
+    ));
 
     // Validazione
     if ($nome === '') {
@@ -34,7 +47,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($errors)) {
         try {
-            $stmt = get_db()->prepare(
+            $db = get_db();
+            $db->beginTransaction();
+
+            $stmt = $db->prepare(
                 'INSERT INTO contatti (nome, cognome, numero_telefono, indirizzo, data_nascita, id_azienda)
                  VALUES (:nome, :cognome, :numero_telefono, :indirizzo, :data_nascita, :id_azienda)'
             );
@@ -46,8 +62,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':data_nascita'    => $data_nascita !== '' ? $data_nascita : null,
                 ':id_azienda'      => $id_azienda,
             ]);
+            $new_id = (int) $db->lastInsertId();
+
+            // Inserisce le associazioni ai tag
+            if (!empty($tag_ids_validi)) {
+                $stmt_tag = $db->prepare(
+                    'INSERT IGNORE INTO contatti_tags (id_contatto, id_tag) VALUES (:id_contatto, :id_tag)'
+                );
+                foreach ($tag_ids_validi as $id_tag) {
+                    $stmt_tag->execute([':id_contatto' => $new_id, ':id_tag' => $id_tag]);
+                }
+            }
+
+            $db->commit();
             $success = true;
         } catch (PDOException $e) {
+            isset($db) && $db->inTransaction() && $db->rollBack();
             $errors[] = 'Errore durante il salvataggio del contatto.';
         }
     }
@@ -113,6 +143,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php endforeach; ?>
             </select>
         </div>
+        <?php if (!empty($tags_disponibili)): ?>
+        <div class="form-group">
+            <label>Tag</label>
+            <div class="tag-checkboxes">
+                <?php
+                $selected_tags = array_values(array_filter(
+                    array_map('intval', $_POST['tags'] ?? []),
+                    fn($v) => $v > 0
+                ));
+                foreach ($tags_disponibili as $tag):
+                ?>
+                    <label class="tag-checkbox-label">
+                        <input type="checkbox" name="tags[]"
+                               value="<?= $tag['id'] ?>"
+                               <?= in_array((int)$tag['id'], $selected_tags, true) ? 'checked' : '' ?>>
+                        <?= htmlspecialchars($tag['nome']) ?>
+                    </label>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <?php endif; ?>
         <button type="submit" class="btn-primary">Salva contatto</button>
         <a href="index.php" class="btn-cancel">Annulla</a>
     </form>

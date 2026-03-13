@@ -121,3 +121,35 @@ form {
     margin-left: 8px;
 }
 .btn-cancel:hover { background: #7f8c8d; }
+
+/* Tag badge (lista contatti) */
+.tag-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #3498db;
+    color: #fff;
+    border-radius: 10px;
+    font-size: 0.78rem;
+    margin-right: 3px;
+    margin-bottom: 2px;
+}
+
+/* Checkboxes tag nel form */
+.tag-checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 4px 0;
+}
+.tag-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: normal;
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+.tag-checkbox-label input[type="checkbox"] {
+    width: auto;
+    cursor: pointer;
+}
