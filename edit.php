@@ -30,6 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $cognome         = trim($_POST['cognome']         ?? '');
     $numero_telefono = trim($_POST['numero_telefono'] ?? '');
     $indirizzo       = trim($_POST['indirizzo']       ?? '');
+    $data_nascita    = trim($_POST['data_nascita']    ?? '');
 
     // Validazione
     if ($nome === '') {
@@ -49,7 +50,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     SET nome = :nome,
                         cognome = :cognome,
                         numero_telefono = :numero_telefono,
-                        indirizzo = :indirizzo
+                        indirizzo = :indirizzo,
+                        data_nascita = :data_nascita
                   WHERE id = :id'
             );
             $stmt->execute([
@@ -57,6 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':cognome'         => $cognome,
                 ':numero_telefono' => $numero_telefono,
                 ':indirizzo'       => $indirizzo !== '' ? $indirizzo : null,
+                ':data_nascita'    => $data_nascita !== '' ? $data_nascita : null,
                 ':id'              => $id,
             ]);
             // Aggiorna i dati locali per il form
@@ -65,6 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'cognome'         => $cognome,
                 'numero_telefono' => $numero_telefono,
                 'indirizzo'       => $indirizzo,
+                'data_nascita'    => $data_nascita,
             ]);
             $success = true;
         } catch (PDOException $e) {
@@ -76,7 +80,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Valori per il form (POST ha priorità in caso di errori)
 $v = $_SERVER['REQUEST_METHOD'] === 'POST'
     ? ['nome' => $_POST['nome'] ?? '', 'cognome' => $_POST['cognome'] ?? '',
-       'numero_telefono' => $_POST['numero_telefono'] ?? '', 'indirizzo' => $_POST['indirizzo'] ?? '']
+       'numero_telefono' => $_POST['numero_telefono'] ?? '', 'indirizzo' => $_POST['indirizzo'] ?? '',
+       'data_nascita' => $_POST['data_nascita'] ?? '']
     : $contatto;
 ?>
 <!DOCTYPE html>
@@ -121,6 +126,11 @@ $v = $_SERVER['REQUEST_METHOD'] === 'POST'
             <label for="indirizzo">Indirizzo</label>
             <input type="text" id="indirizzo" name="indirizzo"
                    value="<?= htmlspecialchars($v['indirizzo'] ?? '') ?>">
+        </div>
+        <div class="form-group">
+            <label for="data_nascita">Data di nascita</label>
+            <input type="date" id="data_nascita" name="data_nascita"
+                   value="<?= htmlspecialchars($v['data_nascita'] ?? '') ?>">
         </div>
         <button type="submit" class="btn-primary">Aggiorna contatto</button>
         <a href="index.php" class="btn-cancel">Annulla</a>

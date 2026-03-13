@@ -9,6 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $cognome         = trim($_POST['cognome']         ?? '');
     $numero_telefono = trim($_POST['numero_telefono'] ?? '');
     $indirizzo       = trim($_POST['indirizzo']       ?? '');
+    $data_nascita    = trim($_POST['data_nascita']    ?? '');
 
     // Validazione
     if ($nome === '') {
@@ -24,14 +25,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($errors)) {
         try {
             $stmt = get_db()->prepare(
-                'INSERT INTO contatti (nome, cognome, numero_telefono, indirizzo)
-                 VALUES (:nome, :cognome, :numero_telefono, :indirizzo)'
+                'INSERT INTO contatti (nome, cognome, numero_telefono, indirizzo, data_nascita)
+                 VALUES (:nome, :cognome, :numero_telefono, :indirizzo, :data_nascita)'
             );
             $stmt->execute([
                 ':nome'            => $nome,
                 ':cognome'         => $cognome,
                 ':numero_telefono' => $numero_telefono,
                 ':indirizzo'       => $indirizzo !== '' ? $indirizzo : null,
+                ':data_nascita'    => $data_nascita !== '' ? $data_nascita : null,
             ]);
             $success = true;
         } catch (PDOException $e) {
@@ -82,6 +84,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label for="indirizzo">Indirizzo</label>
             <input type="text" id="indirizzo" name="indirizzo"
                    value="<?= htmlspecialchars($_POST['indirizzo'] ?? '') ?>">
+        </div>
+        <div class="form-group">
+            <label for="data_nascita">Data di nascita</label>
+            <input type="date" id="data_nascita" name="data_nascita"
+                   value="<?= htmlspecialchars($_POST['data_nascita'] ?? '') ?>">
         </div>
         <button type="submit" class="btn-primary">Salva contatto</button>
         <a href="index.php" class="btn-cancel">Annulla</a>
