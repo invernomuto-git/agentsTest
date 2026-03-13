@@ -25,12 +25,22 @@ if (!$contatto) {
     exit;
 }
 
+// Carica l'elenco delle aziende per il dropdown
+try {
+    $aziende = get_db()->query('SELECT id, nome FROM aziende ORDER BY nome')->fetchAll();
+} catch (PDOException $e) {
+    $aziende = [];
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nome            = trim($_POST['nome']            ?? '');
     $cognome         = trim($_POST['cognome']         ?? '');
     $numero_telefono = trim($_POST['numero_telefono'] ?? '');
     $indirizzo       = trim($_POST['indirizzo']       ?? '');
     $data_nascita    = trim($_POST['data_nascita']    ?? '');
+    $id_azienda      = isset($_POST['id_azienda']) && ctype_digit($_POST['id_azienda'])
+                        ? (int) $_POST['id_azienda']
+                        : null;
 
     // Validazione
     if ($nome === '') {
@@ -51,7 +61,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         cognome = :cognome,
                         numero_telefono = :numero_telefono,
                         indirizzo = :indirizzo,
-                        data_nascita = :data_nascita
+                        data_nascita = :data_nascita,
+                        id_azienda = :id_azienda
                   WHERE id = :id'
             );
             $stmt->execute([
@@ -60,6 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':numero_telefono' => $numero_telefono,
                 ':indirizzo'       => $indirizzo !== '' ? $indirizzo : null,
                 ':data_nascita'    => $data_nascita !== '' ? $data_nascita : null,
+                ':id_azienda'      => $id_azienda,
                 ':id'              => $id,
             ]);
             // Aggiorna i dati locali per il form
@@ -69,6 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'numero_telefono' => $numero_telefono,
                 'indirizzo'       => $indirizzo,
                 'data_nascita'    => $data_nascita,
+                'id_azienda'      => $id_azienda,
             ]);
             $success = true;
         } catch (PDOException $e) {
@@ -81,7 +94,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $v = $_SERVER['REQUEST_METHOD'] === 'POST'
     ? ['nome' => $_POST['nome'] ?? '', 'cognome' => $_POST['cognome'] ?? '',
        'numero_telefono' => $_POST['numero_telefono'] ?? '', 'indirizzo' => $_POST['indirizzo'] ?? '',
-       'data_nascita' => $_POST['data_nascita'] ?? '']
+       'data_nascita' => $_POST['data_nascita'] ?? '',
+       'id_azienda' => isset($_POST['id_azienda']) && ctype_digit($_POST['id_azienda'])
+                        ? (int)$_POST['id_azienda'] : null]
     : $contatto;
 ?>
 <!DOCTYPE html>
@@ -131,6 +146,18 @@ $v = $_SERVER['REQUEST_METHOD'] === 'POST'
             <label for="data_nascita">Data di nascita</label>
             <input type="date" id="data_nascita" name="data_nascita"
                    value="<?= htmlspecialchars($v['data_nascita'] ?? '') ?>">
+        </div>
+        <div class="form-group">
+            <label for="id_azienda">Azienda</label>
+            <select id="id_azienda" name="id_azienda">
+                <option value="">— Nessuna azienda —</option>
+                <?php foreach ($aziende as $az): ?>
+                    <option value="<?= $az['id'] ?>"
+                        <?= (!empty($v['id_azienda']) && (int)$v['id_azienda'] === $az['id']) ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($az['nome']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
         </div>
         <button type="submit" class="btn-primary">Aggiorna contatto</button>
         <a href="index.php" class="btn-cancel">Annulla</a>

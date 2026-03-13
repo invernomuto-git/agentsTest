@@ -13,9 +13,14 @@ if (isset($_GET['deleted'])) {
     $messageType = 'error';
 }
 
-// Lettura contatti
+// Lettura contatti con azienda associata
 try {
-    $contatti = get_db()->query('SELECT * FROM contatti ORDER BY cognome, nome')->fetchAll();
+    $contatti = get_db()->query(
+        'SELECT c.*, a.nome AS nome_azienda
+           FROM contatti c
+           LEFT JOIN aziende a ON c.id_azienda = a.id
+          ORDER BY c.cognome, c.nome'
+    )->fetchAll();
 } catch (PDOException $e) {
     $contatti = [];
     $message = 'Impossibile connettersi al database: ' . htmlspecialchars($e->getMessage());
@@ -35,6 +40,7 @@ try {
 
     <nav>
         <a href="create.php">+ Nuovo contatto</a>
+        <a href="aziende.php">Gestisci aziende</a>
     </nav>
 
     <?php if ($message): ?>
@@ -53,6 +59,7 @@ try {
                     <th>Telefono</th>
                     <th>Indirizzo</th>
                     <th>Data di nascita</th>
+                    <th>Azienda</th>
                     <th>Azioni</th>
                 </tr>
             </thead>
@@ -65,6 +72,7 @@ try {
                     <td><?= htmlspecialchars($c['numero_telefono']) ?></td>
                     <td><?= htmlspecialchars($c['indirizzo'] ?? '') ?></td>
                     <td><?= htmlspecialchars($c['data_nascita'] ?? '') ?></td>
+                    <td><?= htmlspecialchars($c['nome_azienda'] ?? '') ?></td>
                     <td class="actions">
                         <a href="edit.php?id=<?= $c['id'] ?>" class="btn-edit">Modifica</a>
                         <a href="delete.php?id=<?= $c['id'] ?>" class="btn-delete"

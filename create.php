@@ -4,12 +4,22 @@ require_once __DIR__ . '/db.php';
 $errors = [];
 $success = false;
 
+// Carica l'elenco delle aziende per il dropdown
+try {
+    $aziende = get_db()->query('SELECT id, nome FROM aziende ORDER BY nome')->fetchAll();
+} catch (PDOException $e) {
+    $aziende = [];
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nome            = trim($_POST['nome']            ?? '');
     $cognome         = trim($_POST['cognome']         ?? '');
     $numero_telefono = trim($_POST['numero_telefono'] ?? '');
     $indirizzo       = trim($_POST['indirizzo']       ?? '');
     $data_nascita    = trim($_POST['data_nascita']    ?? '');
+    $id_azienda      = isset($_POST['id_azienda']) && ctype_digit($_POST['id_azienda'])
+                        ? (int) $_POST['id_azienda']
+                        : null;
 
     // Validazione
     if ($nome === '') {
@@ -25,8 +35,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($errors)) {
         try {
             $stmt = get_db()->prepare(
-                'INSERT INTO contatti (nome, cognome, numero_telefono, indirizzo, data_nascita)
-                 VALUES (:nome, :cognome, :numero_telefono, :indirizzo, :data_nascita)'
+                'INSERT INTO contatti (nome, cognome, numero_telefono, indirizzo, data_nascita, id_azienda)
+                 VALUES (:nome, :cognome, :numero_telefono, :indirizzo, :data_nascita, :id_azienda)'
             );
             $stmt->execute([
                 ':nome'            => $nome,
@@ -34,6 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':numero_telefono' => $numero_telefono,
                 ':indirizzo'       => $indirizzo !== '' ? $indirizzo : null,
                 ':data_nascita'    => $data_nascita !== '' ? $data_nascita : null,
+                ':id_azienda'      => $id_azienda,
             ]);
             $success = true;
         } catch (PDOException $e) {
@@ -89,6 +100,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label for="data_nascita">Data di nascita</label>
             <input type="date" id="data_nascita" name="data_nascita"
                    value="<?= htmlspecialchars($_POST['data_nascita'] ?? '') ?>">
+        </div>
+        <div class="form-group">
+            <label for="id_azienda">Azienda</label>
+            <select id="id_azienda" name="id_azienda">
+                <option value="">— Nessuna azienda —</option>
+                <?php foreach ($aziende as $az): ?>
+                    <option value="<?= $az['id'] ?>"
+                        <?= (isset($_POST['id_azienda']) && (int)$_POST['id_azienda'] === $az['id']) ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($az['nome']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
         </div>
         <button type="submit" class="btn-primary">Salva contatto</button>
         <a href="index.php" class="btn-cancel">Annulla</a>
