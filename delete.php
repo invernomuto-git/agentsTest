@@ -56,6 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm'])) {
         <tr><th>Cognome</th><td><?= htmlspecialchars($contatto['cognome']) ?></td></tr>
         <tr><th>Telefono</th><td><?= htmlspecialchars($contatto['numero_telefono']) ?></td></tr>
         <tr><th>Indirizzo</th><td><?= htmlspecialchars($contatto['indirizzo'] ?? '') ?></td></tr>
+        <tr><th>Data di nascita</th><td><?= htmlspecialchars($contatto['data_nascita'] ?? '') ?></td></tr>
     </table>
 
     <form method="post" action="delete.php?id=<?= $id ?>">

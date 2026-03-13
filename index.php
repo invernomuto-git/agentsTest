@@ -52,6 +52,7 @@ try {
                     <th>Nome</th>
                     <th>Telefono</th>
                     <th>Indirizzo</th>
+                    <th>Data di nascita</th>
                     <th>Azioni</th>
                 </tr>
             </thead>
@@ -63,6 +64,7 @@ try {
                     <td><?= htmlspecialchars($c['nome']) ?></td>
                     <td><?= htmlspecialchars($c['numero_telefono']) ?></td>
                     <td><?= htmlspecialchars($c['indirizzo'] ?? '') ?></td>
+                    <td><?= htmlspecialchars($c['data_nascita'] ?? '') ?></td>
                     <td class="actions">
                         <a href="edit.php?id=<?= $c['id'] ?>" class="btn-edit">Modifica</a>
                         <a href="delete.php?id=<?= $c['id'] ?>" class="btn-delete"
