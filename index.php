@@ -13,12 +13,16 @@ if (isset($_GET['deleted'])) {
     $messageType = 'error';
 }
 
-// Lettura contatti con azienda associata
+// Lettura contatti con azienda associata e tag
 try {
     $contatti = get_db()->query(
-        'SELECT c.*, a.nome AS nome_azienda
+        'SELECT c.*, a.nome AS nome_azienda,
+                GROUP_CONCAT(t.nome ORDER BY t.id SEPARATOR \', \') AS tags
            FROM contatti c
            LEFT JOIN aziende a ON c.id_azienda = a.id
+           LEFT JOIN contatti_tags ct ON c.id = ct.id_contatto
+           LEFT JOIN tags t ON ct.id_tag = t.id
+          GROUP BY c.id
           ORDER BY c.cognome, c.nome'
     )->fetchAll();
 } catch (PDOException $e) {
@@ -60,6 +64,7 @@ try {
                     <th>Indirizzo</th>
                     <th>Data di nascita</th>
                     <th>Azienda</th>
+                    <th>Tag</th>
                     <th>Azioni</th>
                 </tr>
             </thead>
@@ -73,6 +78,13 @@ try {
                     <td><?= htmlspecialchars($c['indirizzo'] ?? '') ?></td>
                     <td><?= htmlspecialchars($c['data_nascita'] ?? '') ?></td>
                     <td><?= htmlspecialchars($c['nome_azienda'] ?? '') ?></td>
+                    <td>
+                        <?php if (!empty($c['tags'])): ?>
+                            <?php foreach (explode(', ', $c['tags']) as $tag_nome): ?>
+                                <span class="tag-badge"><?= htmlspecialchars($tag_nome) ?></span>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </td>
                     <td class="actions">
                         <a href="edit.php?id=<?= $c['id'] ?>" class="btn-edit">Modifica</a>
                         <a href="delete.php?id=<?= $c['id'] ?>" class="btn-delete"
