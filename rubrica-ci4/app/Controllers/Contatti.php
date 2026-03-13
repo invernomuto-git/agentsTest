@@ -45,7 +45,7 @@ class Contatti extends BaseController
         $aziende          = $this->aziendaModel->orderBy('nome')->findAll();
         $tags_disponibili = $this->tagModel->orderBy('id')->findAll();
 
-        if ($this->request->getMethod() === 'post') {
+        if ($this->request->getMethod() === 'POST') {
             $rules = [
                 'nome'            => 'required|max_length[100]',
                 'cognome'         => 'required|max_length[100]',
@@ -128,7 +128,7 @@ class Contatti extends BaseController
         $tags_disponibili = $this->tagModel->orderBy('id')->findAll();
         $tag_ids_correnti = $this->contattoModel->getTagIds($id);
 
-        if ($this->request->getMethod() === 'post') {
+        if ($this->request->getMethod() === 'POST') {
             $rules = [
                 'nome'            => 'required|max_length[100]',
                 'cognome'         => 'required|max_length[100]',
@@ -212,7 +212,7 @@ class Contatti extends BaseController
             return redirect()->to('/contatti');
         }
 
-        if ($this->request->getMethod() === 'post') {
+        if ($this->request->getMethod() === 'POST') {
             $this->contattoModel->delete($id);
             return redirect()->to('/contatti')->with('success', 'Contatto eliminato con successo.');
         }
