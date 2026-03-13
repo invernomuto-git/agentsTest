@@ -1,1 +1,7 @@
 config.php
+v1/config.php
+
+# CodeIgniter 4 – ignore generated/installed artefacts
+rubrica-ci4/vendor/
+rubrica-ci4/writable/
+rubrica-ci4/.env
